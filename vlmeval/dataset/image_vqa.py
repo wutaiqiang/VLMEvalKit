@@ -398,7 +398,7 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
     }
     DATASET_MD5 = {
-        'MetaPhyX': '495f0e50771bf03c6eae5d6be9b680e6', # noqa
+        'MetaPhyX': '69dc979f77c3abbf40f6ea0d6c7aad0a', # noqa
         'MetaPhyX_MC': '8552097b249b013bff544df94f276722', # noqa
     }
     # Given one data record, return the built prompt (a multi-modal message), can override

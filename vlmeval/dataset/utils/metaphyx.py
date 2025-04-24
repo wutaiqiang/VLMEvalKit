@@ -8,32 +8,47 @@ FAIL_MSG = 'Failed to obtain answer via API.'
 
 def get_gpt4_ICE():
     example_1 = """
-Ground truth answer: 1/2 \n
-Predicted answer: 0.5 \n
+Ground truth answer: 26.7kg \n
+Predicted answer: The mass of block \( B \) is: 
+\[ 
+\boxed{26.7 \, \text\{kg\}}
+\] \n
 Judegement: 1
 """
 
     example_2 = """
-Ground truth answer: x^2-x \n
-Predicted answer: x(x-1) \n
+Ground truth answer: 46.3kN \n
+Predicted answer: The tension \( T_B \) in the cable is approximately:
+\[
+\boxed{4630 \, \text{N}}
+\] \n
 Judegement: 1
 """
 
     example_3 = """
-Ground truth answer: 5kg \n
-Predicted answer: 5000 g \n
+Ground truth answer: 12.3m/s \n
+Predicted answer: The speed of the box after 2.00 seconds is:
+\[
+\boxed{12.3 \, \text{m/s}}
+\] \n
 Judegement: 1
 """
 
     example_4 = """
-Ground truth answer: 50mg \n
-Predicted answer: 0.005g \n
+Ground truth answer: 36.0kg \n
+Predicted answer: The mass of the hanging block \( m_2 \) must be approximately:
+\[
+\boxed{36.1 \, \text\{kg\}}
+\] \n
 Judegement: 0
 """
 
     example_5 = """
-Ground truth answer: $x^2$ \n
-Predicted answer: x^2 \n
+Ground truth answer: 0.8m \n
+Predicted answer: The distance \( l \) between the forces should be:
+\[
+\boxed{0.80 \, \text\{m\}}
+\] \n
 Judegement: 1
 """
 
@@ -64,6 +79,10 @@ def MetaPhyX_auxeval(model, line):
 
     gt_answer = line['answer']
     prediction = line['prediction']
+
+    if "Final Answer:" in prediction:
+        prediction = prediction.split("Final Answer:")[-1]
+        # print("hit", gt_answer, "*****", prediction)
 
     if gt_answer == prediction:
         return dict(log="Matched at string level", res=1)
