@@ -390,6 +390,117 @@ class MathVerse(ImageBaseDataset):
         dump(score, score_pth)
         return score
 
+class MetaPhyX(ImageBaseDataset):
+    TYPE = 'VQA'
+
+    DATASET_URL = {
+        'MetaPhyX': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX.tsv', # noqa
+        'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
+    }
+    DATASET_MD5 = {
+        'MetaPhyX': 'a9a3f7d54f039619b7c50b88c6c6a57b', # noqa
+        'MetaPhyX_MC': 'a6855c2b633c52dda676cbf229f43666', # noqa
+    }
+    # Given one data record, return the built prompt (a multi-modal message), can override
+    def build_prompt(self, line):
+        if isinstance(line, int):
+            line = self.data.iloc[line]
+
+        if self.meta_only:
+            tgt_path = toliststr(line['image_path'])
+        else:
+            tgt_path = self.dump_image(line) # save image
+
+        question = line['question']
+
+        msgs = []
+        if isinstance(tgt_path, list):
+            msgs.extend([dict(type='image', value=p) for p in tgt_path])
+        else:
+            msgs = [dict(type='image', value=tgt_path)]
+        msgs.append(dict(type='text', value=question))
+        return msgs
+
+    # It returns a DataFrame
+    @classmethod
+    def evaluate(self, eval_file, **judge_kwargs):
+        if "_MC" in eval_file:
+            #! 字符级别的匹配  
+            from .utils.vqa_eval import process_line
+            data = load(eval_file)
+            assert 'answer' in data and 'prediction' in data
+            data['prediction'] = [str(x) for x in data['prediction']]
+            data['answer'] = [str(x) for x in data['answer']] 
+            lt = len(data)
+            lines = [data.iloc[i] for i in range(lt)]     
+            pool = mp.Pool(1)        
+            res = pool.map(partial(process_line, method="accuracy"), lines)
+            hit = [np.mean(x['match']) for x in res]
+            ret = dict()
+            ret['Overall'] = np.mean(hit) * 100
+            if 'category' in data:
+                cates = list(set(data['category']))
+                cates.sort()
+                for c in cates:
+                    sub = [r for l, r in zip(lines, res) if l['category'] == c]
+                    # [np.mean(x['match']) >= full_score_weight for x in sub]
+                    hit = [np.mean(x['match']) for x in sub]
+                    ret[c] = np.mean(hit) * 100
+            ret = d2df(ret)
+            ret.round(2)
+
+            suffix = eval_file.split('.')[-1]
+            result_file = eval_file.replace(f'.{suffix}', '_acc.csv')
+            dump(ret, result_file)
+            return ret
+        else:
+            #! 模型比对结果
+            #! 参考 mathvista
+            from .utils.metaphyx import MetaPhyX_auxeval, MetaPhyX_acc
+
+            model = judge_kwargs['model']
+            suffix = eval_file.split('.')[-1]
+            storage = eval_file.replace(f'.{suffix}', f'_{model}.xlsx')
+            tmp_file = eval_file.replace(f'.{suffix}', f'_{model}.pkl')
+            nproc = judge_kwargs.pop('nproc', 4)
+
+            if not osp.exists(storage):
+                data = load(eval_file)
+                model = build_judge(max_tokens=128, **judge_kwargs)
+                assert model.working(), ('MetaPhyX evaluation requires a working API\n')
+                lt = len(data)
+                lines = [data.iloc[i] for i in range(lt)]
+                tups = [(model, line) for line in lines]
+                indices = [line['index'] for line in lines]
+
+                ans = {}
+                if osp.exists(tmp_file):
+                    ans = load(tmp_file)
+                tups = [x for x, i in zip(tups, indices) if i not in ans]
+                indices = [i for i in indices if i not in ans]
+
+                if len(indices):
+                    new_results = track_progress_rich(
+                        MetaPhyX_auxeval,
+                        tups,
+                        nproc=nproc,
+                        chunksize=nproc,
+                        keys=indices,
+                        save=tmp_file,
+                    )
+                    ans = load(tmp_file)
+                    for k, v in zip(indices, new_results):
+                        assert k in ans
+                        assert ans[k]['log'] == v['log'] and ans[k]['res'] == v['res']
+
+                data['res'] = [ans[idx]['res'] for idx in data['index']]
+                data['log'] = [ans[idx]['log'] for idx in data['index']]
+                dump(data, storage)
+
+            score = MetaPhyX_acc(storage)
+            score_pth = storage.replace('.xlsx', '_score.csv')
+            dump(score, score_pth)
+            return score           
 
 class MathVision(ImageBaseDataset):
     TYPE = 'VQA'

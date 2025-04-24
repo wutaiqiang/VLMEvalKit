@@ -281,5 +281,4 @@ def process_line(line, method='vqa_score'):
         ret['gt'] = [process_answer(x) for x in answers]
         ret['pred'] = process_answer(line['prediction'])
         ret['match'] = [x == ret['pred'] for x in ret['gt']]
-
     return ret
