@@ -398,8 +398,8 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
     }
     DATASET_MD5 = {
-        'MetaPhyX': 'a9a3f7d54f039619b7c50b88c6c6a57b', # noqa
-        'MetaPhyX_MC': 'a6855c2b633c52dda676cbf229f43666', # noqa
+        'MetaPhyX': '495f0e50771bf03c6eae5d6be9b680e6', # noqa
+        'MetaPhyX_MC': '8552097b249b013bff544df94f276722', # noqa
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
@@ -425,8 +425,8 @@ class MetaPhyX(ImageBaseDataset):
     @classmethod
     def evaluate(self, eval_file, **judge_kwargs):
         if "_MC" in eval_file:
-            #! 字符级别的匹配  
-            from .utils.vqa_eval import process_line
+            #! 字符级别的匹配, 正则抽取+字符比对
+            from .utils.metaphyx import MetaPhyX_process_line
             data = load(eval_file)
             assert 'answer' in data and 'prediction' in data
             data['prediction'] = [str(x) for x in data['prediction']]
@@ -434,7 +434,7 @@ class MetaPhyX(ImageBaseDataset):
             lt = len(data)
             lines = [data.iloc[i] for i in range(lt)]     
             pool = mp.Pool(1)        
-            res = pool.map(partial(process_line, method="accuracy"), lines)
+            res = pool.map(partial(MetaPhyX_process_line), lines)
             hit = [np.mean(x['match']) for x in res]
             ret = dict()
             ret['Overall'] = np.mean(hit) * 100

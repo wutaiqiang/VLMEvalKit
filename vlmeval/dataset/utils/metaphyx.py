@@ -1,5 +1,6 @@
 from ...smp import *
 from ...utils import can_infer
+import re
 
 
 FAIL_MSG = 'Failed to obtain answer via API.'
@@ -102,3 +103,31 @@ def MetaPhyX_acc(result_file):
         final_res[k] = sum(v)/len(v)
     df = pd.DataFrame(final_res, index=[0])
     return df
+
+
+def MetaPhyX_process_line(line):
+    ret = {}
+    if istype(line['answer'], list):
+        answers = eval(line['answer'])
+    else:
+        answers = [line['answer']]
+
+
+    ret['gt'] = answers
+    ret['pred'] = line['prediction'].strip()
+    ret['match'] = []
+    for x in ret['gt']:
+        pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\s*[：:\s]*([A-D])'
+        match = re.search(pattern, ret['pred'])
+        if match:
+            extracted_answer=match.group(1)
+            if x.strip().lower() == extracted_answer.strip().lower():
+                ret['match'].append(1)
+                continue
+        # 正则匹配不成功，尝试字符比对
+        if x+": " in ret['pred']:
+            ret['match'].append(1)
+        else:
+            ret['match'].append(0)
+            
+    return ret
