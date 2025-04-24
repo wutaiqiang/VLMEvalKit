@@ -117,7 +117,7 @@ def MetaPhyX_process_line(line):
     ret['pred'] = line['prediction'].strip()
     ret['match'] = []
     for x in ret['gt']:
-        pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\s*[：:\s]*([A-D])'
+        pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
         match = re.search(pattern, ret['pred'])
         if match:
             extracted_answer=match.group(1)
