@@ -20,7 +20,7 @@ Judegement: 1
 Ground truth answer: 46.3kN \n
 Predicted answer: The tension \( T_B \) in the cable is approximately:
 \[
-\boxed{4630 \, \text{N}}
+\boxed{46300 \, \text{N}}
 \] \n
 Judegement: 1
 """
@@ -95,7 +95,7 @@ def MetaPhyX_auxeval(model, line):
             if "1" in res or 1 == res:
                 log += "Semantic equal via LLM."
                 return dict(log=log, res=1)
-            else:
+            elif "0" in res or 0 == res:
                 log += "LLM judgement {}".format(res)
                 return dict(log=log, res=0)
     log += 'All 5 retries failed.\n'
