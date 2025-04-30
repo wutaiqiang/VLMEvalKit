@@ -456,7 +456,7 @@ class MetaPhyX(ImageBaseDataset):
         else:
             #! 模型比对结果
             #! 参考 mathvista
-            from .utils.metaphyx import MetaPhyX_auxeval, MetaPhyX_acc
+            from .utils.metaphyx import MetaPhyX_auxeval, MetaPhyX_acc, MetaPhyX_step_acc
 
             model = judge_kwargs['model']
             suffix = eval_file.split('.')[-1]
@@ -497,7 +497,11 @@ class MetaPhyX(ImageBaseDataset):
                 data['log'] = [ans[idx]['log'] for idx in data['index']]
                 dump(data, storage)
 
-            score = MetaPhyX_acc(storage)
+            if 'step_score' in judge_kwargs:
+                # TODO(wdxu): modify parameters
+                score = MetaPhyX_step_acc(storage, save_file=judge_kwargs['save_file'], api_key=judge_kwargs['api_key'])
+            else:
+                score = MetaPhyX_acc(storage)
             score_pth = storage.replace('.xlsx', '_score.csv')
             dump(score, score_pth)
             return score           

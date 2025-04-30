@@ -1,7 +1,21 @@
-from ...smp import *
-from ...utils import can_infer
+from vlmeval.smp import *
+from vlmeval.utils import can_infer
 import re
+import json
+import os
+import copy
+import argparse
+from tqdm import tqdm
+from collections import defaultdict
+from vlmeval.dataset.utils.step_scorer.utils import *
 
+# OpenAI
+import openai
+
+from vlmeval.dataset.utils.step_scorer.prompts import demo_prompt_score
+
+from vlmeval.dataset.utils.step_scorer.extract_answer_s1 import main as extract_answer_s1
+from vlmeval.dataset.utils.step_scorer.score_answer_s2 import main as score_answer_s2
 
 FAIL_MSG = 'Failed to obtain answer via API.'
 
@@ -150,3 +164,18 @@ def MetaPhyX_process_line(line):
             ret['match'].append(0)
             
     return ret
+
+
+def MetaPhyX_step_acc(result_file, save_file, api_key):
+    if '.json' in result_file:
+        print(f"Reading {result_file}...")
+        extract_answer_s1(model_output_file=result_file, save_file=save_file, api_key=api_key, cache=False, trunk_response=-1, save_every=10)
+        score_answer_s2(answer_extraction_file=save_file, save_file=save_file, quick_match=False, save_every=10, cache=False, trunk_response=-1, api_key=api_key)
+    else:
+        # TODO(wdxu): in case we have other input format.
+        pass
+
+
+if __name__ == '__main__':
+    data_path = 'test/test_samples/step_acc_sample.json'
+    MetaPhyX_step_acc(data_path, save_file='answer.json', api_key='sk-proj-1234567890')
