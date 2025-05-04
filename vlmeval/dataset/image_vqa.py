@@ -424,7 +424,11 @@ class MetaPhyX(ImageBaseDataset):
     # It returns a DataFrame
     @classmethod
     def evaluate(self, eval_file, **judge_kwargs):
-        if "_MC" in eval_file:
+        # if "_MC" in eval_file:
+        # q_type = judge_kwargs.pop('q_type', "OE")
+        q_type = judge_kwargs["q_type"]
+        assert q_type in ["MC", "OE"], print("To evaluate MetaPhyX, you need to set q_type in judge_args")
+        if q_type == "MC":
             #! 字符级别的匹配, 正则抽取+字符比对
             from .utils.metaphyx import MetaPhyX_process_line
             data = load(eval_file)
@@ -497,8 +501,9 @@ class MetaPhyX(ImageBaseDataset):
                 data['log'] = [ans[idx]['log'] for idx in data['index']]
                 dump(data, storage)
 
-            if 'step_score' in judge_kwargs:
+            if "step_score" in judge_kwargs.keys() and judge_kwargs["step_score"] == True:
                 # TODO(wdxu): modify parameters
+                print("Evaluating CoT!")
                 score = MetaPhyX_step_acc(storage, save_file=judge_kwargs['save_file'], api_key=judge_kwargs['api_key'])
             else:
                 score = MetaPhyX_acc(storage)
