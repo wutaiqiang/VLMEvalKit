@@ -13,7 +13,7 @@ pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]
 flags = re.IGNORECASE | re.DOTALL
 
 text = """
-The Final Answer is: \n A \n
+I am . The Final answer is: \n $$ . this is\n
 """
 
 match = re.search(pattern, text, flags=flags)
