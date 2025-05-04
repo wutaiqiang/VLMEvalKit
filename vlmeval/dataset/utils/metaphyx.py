@@ -94,18 +94,25 @@ def MetaPhyX_auxeval(model, line):
     gt_answer = line['answer']
     prediction = line['prediction']
 
-    if "Final Answer:" in prediction:
-        prediction = prediction.split("Final Answer:")[-1]
+    # if "Final Answer:" in prediction:
+        # prediction = prediction.split("Final Answer:")[-1]
         # print("hit", gt_answer, "*****", prediction)
-
-    if gt_answer == prediction:
+    pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*([^\.。]*)'
+    flags = re.IGNORECASE | re.DOTALL
+    match = re.search(pattern, prediction, flags=flags)
+    if match:
+        prediction=match.group(1)
+    
+    if gt_answer.strip().lower() == prediction.strip().lower():
         return dict(log="Matched at string level", res=1)
+    
     for i in range(retry):
         res = model.generate(prompt, temperature=i * 0.5)
         if FAIL_MSG in res:
             log += f'Try {i}: answer and prediction are {gt_answer} and {prediction}, failed to compare.\n'
         else:
             log += 'Compared at semantic level. '
+            # print(res)
             if "1" in res or 1 == res:
                 log += "Semantic equal via LLM."
                 return dict(log=log, res=1)
@@ -150,10 +157,15 @@ def MetaPhyX_process_line(line):
     ret['pred'] = line['prediction'].strip()
     ret['match'] = []
     for x in ret['gt']:
-        pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
-        match = re.search(pattern, ret['pred'])
+        # TB modify
+        # pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
+        pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*([^\.。]*)'
+        flags = re.IGNORECASE | re.DOTALL
+        match = re.search(pattern, ret['pred'], flags=flags)
+        # match = re.search(pattern, ret['pred'])
         if match:
             extracted_answer=match.group(1)
+            # print(extracted_answer, x)
             if x.strip().lower() == extracted_answer.strip().lower():
                 ret['match'].append(1)
                 continue

@@ -504,6 +504,7 @@ class MetaPhyX(ImageBaseDataset):
             if "step_score" in judge_kwargs.keys() and judge_kwargs["step_score"] == True:
                 # TODO(wdxu): modify parameters
                 print("Evaluating CoT!")
+                # eval_file: 推理结果
                 score = MetaPhyX_step_acc(storage, save_file=judge_kwargs['save_file'], api_key=judge_kwargs['api_key'])
             else:
                 score = MetaPhyX_acc(storage)
