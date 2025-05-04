@@ -426,9 +426,9 @@ class MetaPhyX(ImageBaseDataset):
     def evaluate(self, eval_file, **judge_kwargs):
         # if "_MC" in eval_file:
         # q_type = judge_kwargs.pop('q_type', "OE")
-        q_type = judge_kwargs["q_type"]
-        assert q_type in ["MC", "OE"], print("To evaluate MetaPhyX, you need to set q_type in judge_args")
-        if q_type == "MC":
+        valid_type = judge_kwargs["valid_type"]
+        assert valid_type in ["STR", "LLM"], print("To evaluate MetaPhyX, you need to set valid_type in judge_args")
+        if valid_type == "STR":
             #! 字符级别的匹配, 正则抽取+字符比对
             from .utils.metaphyx import MetaPhyX_process_line
             data = load(eval_file)
