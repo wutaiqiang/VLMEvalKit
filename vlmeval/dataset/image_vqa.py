@@ -504,7 +504,13 @@ class MetaPhyX(ImageBaseDataset):
             if "step_score" in judge_kwargs.keys() and judge_kwargs["step_score"] == True:
                 # TODO(wdxu): modify parameters
                 print("Evaluating CoT!")
-                # eval_file: 推理结果
+                # eval_file: 模型推理结果, 测评结果存储文件名可以基于这个名字来修改，如：
+                # suffix = eval_file.split('.')[-1]
+                # result_file = eval_file.replace(f'.{suffix}', '_acc.csv')
+                # dump(ret, result_file)
+                # API 的话，可以直接使用 SiliconFlowAPI
+                # from ...api import SiliconFlowAPI 
+                # model = SiliconFlowAPI('deepseek-ai/DeepSeek-V3')
                 score = MetaPhyX_step_acc(storage, save_file=judge_kwargs['save_file'], api_key=judge_kwargs['api_key'])
             else:
                 score = MetaPhyX_acc(storage)
