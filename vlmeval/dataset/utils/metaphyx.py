@@ -147,7 +147,7 @@ def MetaPhyX_process_line(line):
     if istype(line['answer'], list):
         answers = eval(line['answer'])
     else:
-        answers = [line['answer']]
+        answers = [str(line['answer'])]
 
 
     ret['gt'] = answers
