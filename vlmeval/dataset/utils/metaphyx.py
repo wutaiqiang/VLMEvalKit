@@ -85,7 +85,7 @@ def MetaPhyX_auxeval(model, line):
     log = ''
     retry = 5
 
-    gt_answer = line['answer']
+    gt_answer = str(line['answer'])
     prediction = line['prediction']
 
     # if "Final Answer:" in prediction:
