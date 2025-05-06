@@ -445,20 +445,22 @@ class MetaPhyX(ImageBaseDataset):
             res = pool.map(partial(MetaPhyX_process_line), lines)
 
             suffix = eval_file.split('.')[-1]
-            result_file = eval_file.replace(f'.{suffix}', '_predict.csv')
-            dump(res, result_file)
+            result_file = eval_file.replace(f'.{suffix}', '_predict.xlsx')
+            df = pd.DataFrame(res)
+            df.to_excel(result_file, index=False)
 
-            hit = [np.mean(x['match']) for x in res]
+            hit = [x['match'] for x in res]
             ret = dict()
-            ret['Overall'] = np.mean(hit) * 100
+            ret['Overall'] = np.mean(hit) 
+            print(hit, np.mean(hit))
             if 'category' in data:
                 cates = list(set(data['category']))
                 cates.sort()
                 for c in cates:
                     sub = [r for l, r in zip(lines, res) if l['category'] == c]
                     # [np.mean(x['match']) >= full_score_weight for x in sub]
-                    hit = [np.mean(x['match']) for x in sub]
-                    ret[c] = np.mean(hit) * 100
+                    hit = [x['match'] for x in sub]
+                    ret[c] = np.mean(hit) 
             ret = d2df(ret)
             ret.round(2)
 

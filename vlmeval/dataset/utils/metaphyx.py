@@ -92,7 +92,8 @@ def MetaPhyX_auxeval(model, line):
         # print("hit", gt_answer, "*****", prediction)
 
     # extract final answer
-    pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
+    # pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
+    pattern = r'\b(?:final\s+answer|correct\s+answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n\n|\Z)'
     flags = re.IGNORECASE | re.DOTALL
     match = re.search(pattern, prediction, flags=flags)
     if match:
@@ -143,36 +144,34 @@ def MetaPhyX_acc(result_file):
 
 def MetaPhyX_process_line(line):
     ret = {}
-    if istype(line['answer'], list):
-        answers = eval(line['answer'])
-    else:
-        answers = [str(line['answer'])]
 
+    answers = str(line['answer'])
 
+    ret["index"] = line["index"]
     ret['gt'] = answers
     ret['pred'] = line['prediction'].strip()
-    ret['match'] = []
-    for x in ret['gt']:
-        # TB modify
-        # pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
-        pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
-        flags = re.IGNORECASE | re.DOTALL
-        match = re.search(pattern, ret['pred'], flags=flags)
-        # match = re.search(pattern, ret['pred'])
-        if match:
-            extracted_answer=match.group(1)
-            # print(extracted_answer, x)
-            # compare string
-            ret["extracted"] = extracted_answer
-            if x.strip().lower() == extracted_answer.strip().lower():
-                ret['match'].append(1)
-                continue
-        # 正则匹配不成功，尝试字符比对
-        ret["extracted"] = ret['pred']
-        if x+": " in ret['pred']:
-            ret['match'].append(1)
-        else:
-            ret['match'].append(0)
+
+    # pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
+    # pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n\n|\Z)'
+    pattern = r'\b(?:final\s+answer|correct\s+answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n\n|\Z)'
+    flags = re.IGNORECASE | re.DOTALL
+    match = re.search(pattern, ret['pred'], flags=flags)
+
+    if match:
+        extracted_answer=match.group(1)
+        # compare string
+        ret["extracted"] = extracted_answer
+        if ret['gt'].strip().lower() == extracted_answer.strip().lower():
+            ret['match'] = 1
+            return ret
+    else:
+        ret["extracted"] = "SAME as predict"
+
+    # 二次判定
+    if ret['gt'] in ret['pred']:
+        ret['match'] = 1
+    else:
+        ret['match'] = 0
             
     return ret
 
