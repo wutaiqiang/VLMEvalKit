@@ -398,12 +398,16 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
         'MetaPhyX_mini': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini.tsv', # noqa
         'MetaPhyX_mini_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC.tsv', # noqa
+        'test_mini_MC': '',
+        'test_mini': '',
     }
     DATASET_MD5 = {
         'MetaPhyX': '69dc979f77c3abbf40f6ea0d6c7aad0a', # noqa
         'MetaPhyX_MC': '8552097b249b013bff544df94f276722', # noqa
         'MetaPhyX_mini': '62ee7e453fd482a4c0dd6e5151437d17', # noqa
         'MetaPhyX_mini_MC': 'f6984086ba37ce400d71aebb4faf08b6', # noqa
+        'test_mini_MC': 'df83a96d296e2aea74f81c3d30d7a3b0',
+        'test_mini': '5c9bac7407c4bd994060e79b58153407',
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
@@ -434,7 +438,7 @@ class MetaPhyX(ImageBaseDataset):
         assert valid_type in ["STR", "LLM", "LLM_step"], print("To evaluate MetaPhyX, you need to set valid_type in judge-args")
         if valid_type == "STR":
             #! 字符级别的匹配, 正则抽取+字符比对
-            from .utils.metaphyx import MetaPhyX_process_line
+            from .utils.metaphyx import MetaPhyX_process_line, MetaPhyX_process_line_MC
             data = load(eval_file)
             assert 'answer' in data and 'prediction' in data
             data['prediction'] = [str(x) for x in data['prediction']]
@@ -442,7 +446,10 @@ class MetaPhyX(ImageBaseDataset):
             lt = len(data)
             lines = [data.iloc[i] for i in range(lt)]     
             pool = mp.Pool(1)        
-            res = pool.map(partial(MetaPhyX_process_line), lines)
+            if "_MC" in eval_file:
+                res = pool.map(partial(MetaPhyX_process_line_MC), lines)
+            else:
+                res = pool.map(partial(MetaPhyX_process_line), lines)
 
             suffix = eval_file.split('.')[-1]
             result_file = eval_file.replace(f'.{suffix}', '_predict.xlsx')
@@ -471,7 +478,7 @@ class MetaPhyX(ImageBaseDataset):
         elif valid_type == "LLM":
             #! 模型比对结果
             #! 参考 mathvista
-            from .utils.metaphyx import MetaPhyX_auxeval, MetaPhyX_acc
+            from .utils.metaphyx import MetaPhyX_auxeval, MetaPhyX_acc, MetaPhyX_auxeval_MC
 
             model = judge_kwargs['model']
             suffix = eval_file.split('.')[-1]
@@ -495,14 +502,24 @@ class MetaPhyX(ImageBaseDataset):
                 indices = [i for i in indices if i not in ans]
 
                 if len(indices):
-                    new_results = track_progress_rich(
-                        MetaPhyX_auxeval,
-                        tups,
-                        nproc=nproc,
-                        chunksize=nproc,
-                        keys=indices,
-                        save=tmp_file,
-                    )
+                    if "_MC" in eval_file:
+                        new_results = track_progress_rich(
+                            MetaPhyX_auxeval_MC,
+                            tups,
+                            nproc=nproc,
+                            chunksize=nproc,
+                            keys=indices,
+                            save=tmp_file,
+                        )
+                    else:
+                        new_results = track_progress_rich(
+                            MetaPhyX_auxeval,
+                            tups,
+                            nproc=nproc,
+                            chunksize=nproc,
+                            keys=indices,
+                            save=tmp_file,
+                        )
                     ans = load(tmp_file)
                     for k, v in zip(indices, new_results):
                         assert k in ans

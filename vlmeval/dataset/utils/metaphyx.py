@@ -24,7 +24,7 @@ Judegement: 1
 """
 
     example_2 = """
-Ground truth answer: 46.3kN \n
+Ground truth answer: 46.3 kN \n
 Predicted answer: The tension \( T_B \) in the cable is approximately:
 \[
 \boxed{46300 \, \text{N}}
@@ -33,29 +33,26 @@ Judegement: 1
 """
 
     example_3 = """
-Ground truth answer: 12.3m/s \n
+Ground truth answer: 12 m/s \n
 Predicted answer: The speed of the box after 2.00 seconds is:
 \[
-\boxed{12.3 \, \text{m/s}}
+\boxed{12.0 \, \text{m/s}}
 \] \n
 Judegement: 1
 """
 
     example_4 = """
-Ground truth answer: 36.0kg \n
+Ground truth answer: 36.00 kg \n
 Predicted answer: The mass of the hanging block \( m_2 \) must be approximately:
 \[
 \boxed{36.1 \, \text\{kg\}}
 \] \n
-Judegement: 0
+Judegement: 1
 """
 
     example_5 = """
-Ground truth answer: 0.8m \n
-Predicted answer: The distance \( l \) between the forces should be:
-\[
-\boxed{0.80 \, \text\{m\}}
-\] \n
+Ground truth answer: 4.7 m \n
+Predicted answer: The stuntman and villain slide approximately **4.69 meters**.
 Judegement: 1
 """
 
@@ -65,7 +62,9 @@ Judegement: 1
 def build_metaphyx_gpt4_prompt(line):
     task_description = """
 Please read the following example. Given predicted answer and ground truth answer, 
-compare the these two answers, then ONLY output judegement 1/0 for matched/unmatched at the end of the prompt.\n
+compare the these two answers, then ONLY output judegement 1/0 for matched/unmatched at the end of the prompt. 
+For non-multiple-choice questions, if the meaning is expressed in the same way, it is also considered consistent, for example, 0.5m and 50cm.
+If the answer mentions "approximately", then allow the Approximation error, such as 0.49 and approximately 0.5, 0.81 and approximately 0.8. \n
 """
     gt_answer = line['answer']
     prediction = str(line['prediction'])
@@ -91,14 +90,11 @@ def MetaPhyX_auxeval(model, line):
         # prediction = prediction.split("Final Answer:")[-1]
         # print("hit", gt_answer, "*****", prediction)
 
-    # extract final answer
-    # pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
-    pattern = r'\b(?:final\s+answer|correct\s+answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n\n|\Z)'
-    flags = re.IGNORECASE | re.DOTALL
-    match = re.search(pattern, prediction, flags=flags)
-    if match:
-        prediction=match.group(1)
-    
+    # try extract final answer using re
+    tmp = MetaPhyX_process_line(line)
+    if tmp["extracted"] != "SAME as predict":
+        prediction = tmp["extracted"] # rule extracted
+
     # judge via LLM
     if gt_answer.strip().lower() == prediction.strip().lower():
         return dict(log="Matched at string level", res=1, extracted=prediction)
@@ -119,6 +115,42 @@ def MetaPhyX_auxeval(model, line):
     log += 'All 5 retries failed.\n'
     return dict(log=log, res=0, extracted=prediction)
 
+def MetaPhyX_auxeval_MC(model, line):
+    prompt = build_metaphyx_gpt4_prompt(line)
+    log = ''
+    retry = 5
+
+    gt_answer = str(line['answer'])
+    prediction = line['prediction']
+
+    # if "Final Answer:" in prediction:
+        # prediction = prediction.split("Final Answer:")[-1]
+        # print("hit", gt_answer, "*****", prediction)
+
+    # try extract final answer using re
+    tmp = MetaPhyX_process_line_MC(line)
+    if tmp["extracted"] != "SAME as predict":
+        prediction = tmp["extracted"] # rule extracted
+
+    # judge via LLM
+    if gt_answer.strip().lower() == prediction.strip().lower():
+        return dict(log="Matched at string level", res=1, extracted=prediction)
+    
+    for i in range(retry):
+        res = model.generate(prompt, temperature=i * 0.5)
+        if FAIL_MSG in res:
+            log += f'Try {i}: answer and prediction are {gt_answer} and {prediction}, failed to compare.\n'
+        else:
+            log += 'Compared at semantic level. '
+            # print(res)
+            if "1" in res or 1 == res:
+                log += "Semantic equal via LLM."
+                return dict(log=log, res=1, extracted=prediction)
+            elif "0" in res or 0 == res:
+                log += "LLM judgement {}".format(res)
+                return dict(log=log, res=0, extracted=prediction)
+    log += 'All 5 retries failed.\n'
+    return dict(log=log, res=0, extracted=prediction)
 
 def MetaPhyX_acc(result_file):
     data = load(result_file)
@@ -175,12 +207,44 @@ def MetaPhyX_process_line(line):
             
     return ret
 
+def MetaPhyX_process_line_MC(line):
+    ret = {}
+
+    answers = str(line['answer'])
+
+    ret["index"] = line["index"]
+    ret['gt'] = answers
+    ret['pred'] = line['prediction'].strip()
+
+    pattern = r'\b(?:correct|answer|option|Answer|Option|Correct)\b[\s\S]*?([A-D])'
+    match = re.search(pattern, ret['pred'])
+
+    if match:
+        extracted_answer=match.group(1)
+        # compare string
+        ret["extracted"] = extracted_answer
+        if ret['gt'].strip().lower() == extracted_answer.strip().lower():
+            ret['match'] = 1
+            return ret
+    else:
+
+        ret["extracted"] = "SAME as predict"
+
+    # 二次判定
+    if ret['gt'] + ":" in ret['pred']:
+        ret['match'] = 1
+    else:
+        ret['match'] = 0
+            
+    return ret
+
 #************** CoT Evaluation ****************
 
 # extract cot steps
 def get_cot_ICE():
     example_1 = """
 Model Response: 
+
 
 To solve this problem, we need to determine the magnitude of the pulls $\vec{A}$ and $\vec{B}$ such that their combined effect produces an outward traction force of 12.8 N on the patient's arm. Here's the step-by-step reasoning:
 **Step 1: Understand the Problem**
@@ -233,7 +297,9 @@ $$
 \boxed{7.55}
 $$"
 
-Extracted Response: 
+
+summary
+
 
 1. **Given**: Two forces $\vec{A}$ and $\vec{B}$ with equal magnitudes $F$, applied at an angle of $32^\circ$ from the horizontal.
 2. **Goal**: Find the magnitude $F$ such that the **horizontal (outward)** resultant force is 12.8 N.
@@ -249,102 +315,13 @@ Extracted Response:
    $$
    F = \frac{12.8}{2 \cos(32^\circ)} \approx \frac{12.8}{1.696} \approx 7.55
    $$
-**Final Answer:**
-$$
-\boxed{7.55}\text{N}
-$$
 """
 
-
-    example_2 = """
-Model Response: 
-
-To determine how many degrees apart Alkaid and the Sun would appear to an inhabitant of a planet orbiting Merak, we need to calculate the angular separation between Alkaid and the Sun as viewed from Merak. Here's the step-by-step reasoning:
-**Step 1: Understand the Problem**
-- We are given the distances of various stars from Earth in light-years (ly).
-- The distances are:
-  - Alkaid: 138 ly
-  - Merak: 77 ly
-  - Sun: 0 ly (since the Sun is at the origin for this calculation)
-- We need to find the angular separation between Alkaid and the Sun as seen from Merak.
-**Step 2: Define the Geometry**
-- Let the position of the Sun be at the origin $(0, 0, 0)$.
-- Let the position of Merak be at $(d_M, 0, 0)$, where $d_M = 77$ ly.
-- Let the position of Alkaid be at $(x_A, y_A, z_A)$, where the distance from Earth to Alkaid is 138 ly.
-Since the problem does not specify the exact spatial coordinates of Alkaid relative to Merak, we assume that Alkaid lies in the same plane as Merak and the Sun for simplicity. This means Alkaid's position can be described in two dimensions relative to Merak.
-**Step 3: Use the Law of Cosines to Find the Angular Separation**
-The angular separation $\theta$ between two objects as seen from a third point can be calculated using the law of cosines in spherical trigonometry. However, for small angles (which is typical in astronomy), we can use the simpler formula for angular separation:
-$$
-\theta \approx \frac{d}{D}
-$$
-where:
-- $d$ is the projected separation between the two objects (Alkaid and the Sun) as seen from Merak.
-- $D$ is the distance from Merak to the midpoint of the line segment connecting Alkaid and the Sun.
-**Step 3.1: Calculate the Projected Separation $d$**
-The projected separation $d$ between Alkaid and the Sun as seen from Merak is the straight-line distance between their positions in the plane of Merak, Alkaid, and the Sun.
-
-Using the distances:
-- Distance from Earth to Merak ($d_M$) = 77 ly
-- Distance from Earth to Alkaid ($d_A$) = 138 ly
-
-Assume Alkaid and the Sun lie along a straight line with Merak. The projected separation $d$ is simply the difference in distances:
-$$
-d = d_A - d_M = 138 - 77 = 61 \, \text{ly}
-$$
-**Step 3.2: Calculate the Angular Separation $\theta$**
-The angular separation $\theta$ is given by:
-$$
-\theta \approx \frac{d}{D}
-$$
-where $D$ is the distance from Merak to the midpoint of the line segment connecting Alkaid and the Sun. Since Merak is closer to the Sun than to Alkaid, we use the distance from Merak to the Sun ($d_M = 77$ ly) as an approximation for $D$.
-Thus:
-$$
-\theta \approx \frac{d}{d_M} = \frac{61}{77}
-$$
-Convert this ratio to degrees using the fact that $1 \, \text{radian} \approx 57.3^\circ$:
-$$
-\theta \approx \frac{61}{77} \times 57.3^\circ
-$$
-**Step 3.3: Perform the Calculation**
-First, calculate the ratio:
-$$
-\frac{61}{77} \approx 0.7922
-$$
-Now convert to degrees:
-$$
-\theta \approx 0.7922 \times 57.3^\circ \approx 45.4^\circ
-$$
-**Step 4: Final Answer**
-The angular separation between Alkaid and the Sun as seen from Merak is approximately:
-$$
-\boxed{45.4}
-$$
-
-Extracted Response: 
-
-1. **Given**: Distances from Earth — Alkaid = 138 ly, Merak = 77 ly, Sun = 0 ly.
-2. **Goal**: Find angular separation between Alkaid and the Sun **as seen from Merak**.
-3. **Find separation**: $ d = 138 - 77 = 61 $ ly (projected distance between Alkaid and Sun).
-4. **Use angular size formula**:  
-   $$
-   \theta \approx \frac{d}{D} = \frac{61}{77} \approx 0.7922 \text{ radians}
-   $$
-5. **Convert to degrees**:  
-   $$
-   \theta \approx 0.7922 \times 57.3^\circ \approx 45.4^\circ
-   $$
-Final Answer:
-$$
-\boxed{45.4^\circ}
-$$
-
-"""
-    return [example_1, example_2]
+    return [example_1]
 
 
 def get_cot_score_ICE():
     example_1 = """
-[Question]: A ball moves in a straight line (the x-axis). The graph  shows this ball velocity as a function of time. What are the ball's average speed  during the first 3.0 s? Please answer the question with step by step reasoning.
 [Standard Answer]: 2.33 m/s
 [Model Response]: 
 1. Goal: Find **average speed** in 3.0 s → use position graph.
@@ -360,7 +337,6 @@ Score: 4
     """
 
     example_2 = """
-[Question]: A ball is thrown vertically upward at the same instant that a second ball is dropped from rest directly above it. The two balls are  12.0m apart when they start their motion. Find the maximum speed at which the first ball can be thrown such that it doesn't collide with the second ball before it returns to its starting height. Treat the balls as being very small (i.e. ignore their diameters).
 [Standard Answer]: 7.67 m/s
 [Model Response]: 
 1. Ball A is thrown upward, returns in time $ t = \frac{2v_0}{g} $
@@ -379,26 +355,27 @@ Score: 10
 
 def build_metaphyx_extract_prompt(line):
     task_description = """
-I am providing you a response from a model to a physicx problem, termed 'Model Response'. You should extract the key thinking steps and final answer from the response as 'Extracted Response'. Directly output the extracted response with no explanation.\n\n
+I am providing you a response from a model to a physicx problem. 
+You should summarize the key thinking steps.
+Directly output the summary with no explanation.\n\n
 """ # noqa
     prediction = str(line['prediction'])
     demo_prompt = task_description
     examples = get_cot_ICE()
     for example in examples:
         demo_prompt += example + '\n\n'
-    test_prompt = f"Model Response: \n'{prediction}'\nExtracted Response: \n"
+    test_prompt = f"Model Response: \n\n'{prediction}'\n\nsummary: \n\n"
     full_prompt = f'{demo_prompt}\n{test_prompt}'
 
     return full_prompt
 
 def build_metaphyx_score_prompt(line):
     task_description = """
-Below are two answers to a physic question. 
-Question is [Question], [Standard Answer] is the ground truth answer to the question, and [Model Response] is the thinking steps and final answer from a model's output to this question.  
-Base on the [Question] and [Standard Answer], score the [Model Response] in 0-10 considering the Reasoning Consistency, Answer correctness, and Simplicity.
+Below are two outputs to a physic question. 
+[Standard Answer] is the ground truth answer to the question, and [Model Response] is the thinking steps and final answer from a model's output to this question.  
+Base on the [Standard Answer], score the [Model Response] in 0-10 considering the Reasoning Consistency, Answer correctness, and Simplicity.
 10 for PERFECT Response and 0 for NONSENSE Response, output the score ONLY.\n\n
 """ # noqa
-    question_for_eval = line['question']
     extract = line['extract']
     answer = line['answer']
     demo_prompt = task_description
@@ -406,7 +383,6 @@ Base on the [Question] and [Standard Answer], score the [Model Response] in 0-10
     for example in examples:
         demo_prompt += example + '\n\n'
     test_prompt = f"""
-    [Question]: {question_for_eval}
     [Standard Answer]: {answer}
     [Model Response]: \n {extract}
     Score:
@@ -427,7 +403,13 @@ def MetaPhyX_cot_extract(model, line):
             log += f'Try {i}: output is {prediction}, failed to parse.\n'
         else:
             log += 'Succeed'
-            return dict(log_extract=log, extract=res)
+            ret = MetaPhyX_process_line(line)
+            if ret["extracted"] == "SAME as predict":
+                log += "no avaiable extracted answer"
+                return dict(log_extract=log, extract=res)
+            else:
+                log += "using extracted answer"
+                return dict(log_extract=log, extract=res + "Final Answer: \n" + ret["extracted"])
     log += 'All 5 retries failed.\n'
     return dict(log_extract=log, extract='')
 
