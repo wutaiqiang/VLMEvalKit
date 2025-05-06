@@ -7,7 +7,6 @@ import copy
 import argparse
 from tqdm import tqdm
 from collections import defaultdict
-from vlmeval.dataset.utils.step_scorer.utils import *
 
 FAIL_MSG = 'Failed to obtain answer via API.'
 
@@ -93,7 +92,7 @@ def MetaPhyX_auxeval(model, line):
         # print("hit", gt_answer, "*****", prediction)
 
     # extract final answer
-    pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*([^\.。]*)'
+    pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
     flags = re.IGNORECASE | re.DOTALL
     match = re.search(pattern, prediction, flags=flags)
     if match:
@@ -156,7 +155,7 @@ def MetaPhyX_process_line(line):
     for x in ret['gt']:
         # TB modify
         # pattern = r'\b(?:correct|answer|option|Correct|Answer|Option)\b[\s\S]*?([A-D])'
-        pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*([^\.。]*)'
+        pattern = r'\b(?:correct|answer|option|final\s*answer|correct\s*answer)\b[^:：]*[:：]\s*(.*?)(?=\n\n|\Z)'
         flags = re.IGNORECASE | re.DOTALL
         match = re.search(pattern, ret['pred'], flags=flags)
         # match = re.search(pattern, ret['pred'])

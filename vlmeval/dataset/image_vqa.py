@@ -396,14 +396,14 @@ class MetaPhyX(ImageBaseDataset):
     DATASET_URL = {
         'MetaPhyX': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX.tsv', # noqa
         'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
-        #'MetaPhyX_mini': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini.tsv', # noqa
-        #'MetaPhyX_mini_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC.tsv', # noqa
+        'MetaPhyX_mini': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini.tsv', # noqa
+        'MetaPhyX_mini_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC.tsv', # noqa
     }
     DATASET_MD5 = {
         'MetaPhyX': '69dc979f77c3abbf40f6ea0d6c7aad0a', # noqa
         'MetaPhyX_MC': '8552097b249b013bff544df94f276722', # noqa
-        #'MetaPhyX_mini': '62ee7e453fd482a4c0dd6e5151437d17', # noqa
-        #'MetaPhyX_mini_MC': 'f6984086ba37ce400d71aebb4faf08b6', # noqa
+        'MetaPhyX_mini': '62ee7e453fd482a4c0dd6e5151437d17', # noqa
+        'MetaPhyX_mini_MC': 'f6984086ba37ce400d71aebb4faf08b6', # noqa
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
