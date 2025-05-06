@@ -435,7 +435,7 @@ class MetaPhyX(ImageBaseDataset):
         # if "_MC" in eval_file:
         # q_type = judge_kwargs.pop('q_type', "OE")
         valid_type = judge_kwargs["valid_type"]
-        assert valid_type in ["STR", "LLM", "LLM_step"], print("To evaluate MetaPhyX, you need to set valid_type in judge-args")
+        assert valid_type in ["STR", "LLM"], print("To evaluate MetaPhyX, you need to set valid_type in judge-args")
         if valid_type == "STR":
             #! 字符级别的匹配, 正则抽取+字符比对
             from .utils.metaphyx import MetaPhyX_process_line, MetaPhyX_process_line_MC
@@ -533,100 +533,8 @@ class MetaPhyX(ImageBaseDataset):
             score = MetaPhyX_acc(storage)
             score_pth = storage.replace('.xlsx', '_score.csv')
             dump(score, score_pth)
-            return score       
-        else: 
-            print("Evaluating CoT!")
-            # eval_file: 模型推理结果, 测评结果存储文件名可以基于这个名字来修改，如：
-            # suffix = eval_file.split('.')[-1]
-            # result_file = eval_file.replace(f'.{suffix}', '_acc.csv')
-            # dump(ret, result_file)
-            # API 的话，可以直接使用 SiliconFlowAPI
-            # from ...api import SiliconFlowAPI 
-            # model = SiliconFlowAPI('deepseek-ai/DeepSeek-V3')
-            # score = MetaPhyX_step_acc(storage, save_file=judge_kwargs['save_file'], api_key=judge_kwargs['api_key'])    
-
-            from .utils.metaphyx import MetaPhyX_cot_extract, MetaPhyX_cot_score, MetaPhyX_cot_acc
-
-            model = judge_kwargs['model']
-            suffix = eval_file.split('.')[-1]
-            storage_extract = eval_file.replace(f'.{suffix}', f'_{model}_cot_extract.xlsx')
-            tmp_file_extract = eval_file.replace(f'.{suffix}', f'_{model}_cot_extract.pkl')
-            storage_score = eval_file.replace(f'.{suffix}', f'_{model}_cot_score.xlsx')
-            tmp_file_score = eval_file.replace(f'.{suffix}', f'_{model}_cot_score.pkl')
-            nproc = judge_kwargs.pop('nproc', 4)
-            # stage1: extract the answer
-            if not osp.exists(storage_extract):
-                data = load(eval_file)
-                model = build_judge(max_tokens=128, **judge_kwargs)
-                assert model.working(), ('MetaPhyX evaluation requires a working API\n')
-                lt = len(data)
-                lines = [data.iloc[i] for i in range(lt)]
-                tups = [(model, line) for line in lines]
-                indices = [line['index'] for line in lines]
-
-                ans = {}
-                if osp.exists(tmp_file_extract):
-                    ans = load(tmp_file_extract)
-                tups = [x for x, i in zip(tups, indices) if i not in ans]
-                indices = [i for i in indices if i not in ans]
-
-                if len(indices):
-                    new_results = track_progress_rich(
-                        MetaPhyX_cot_extract,
-                        tups,
-                        nproc=nproc,
-                        chunksize=nproc,
-                        keys=indices,
-                        save=tmp_file_extract,
-                    )
-                    ans = load(tmp_file_extract)
-                    for k, v in zip(indices, new_results):
-                        assert k in ans
-                        assert ans[k]['log_extract'] == v['log_extract'] and ans[k]['extract'] == v['extract']
-
-                data['extract'] = [ans[idx]['extract'] for idx in data['index']]
-                data['log_extract'] = [ans[idx]['log_extract'] for idx in data['index']]
-                dump(data, storage_extract)
-
-            # stage2: score the answer
-            if not osp.exists(storage_score):
-                data = load(storage_extract)
-                model = build_judge(max_tokens=128, **judge_kwargs)
-                assert model.working(), ('MetaPhyX evaluation requires a working API\n')
-                lt = len(data)
-                lines = [data.iloc[i] for i in range(lt)]
-                tups = [(model, line) for line in lines]
-                indices = [line['index'] for line in lines]
-
-                ans = {}
-                if osp.exists(tmp_file_score):
-                    ans = load(tmp_file_score)
-                tups = [x for x, i in zip(tups, indices) if i not in ans]
-                indices = [i for i in indices if i not in ans]
-
-                if len(indices):
-                    # score between 0-10
-                    new_results = track_progress_rich(
-                        MetaPhyX_cot_score,
-                        tups,
-                        nproc=nproc,
-                        chunksize=nproc,
-                        keys=indices,
-                        save=tmp_file_score,
-                    )
-                    ans = load(tmp_file_score)
-                    for k, v in zip(indices, new_results):
-                        assert k in ans
-                        assert ans[k]['log_score'] == v['log_score'] and ans[k]['score'] == v['score']
-
-                data['score'] = [ans[idx]['score'] for idx in data['index']]
-                data['log_score'] = [ans[idx]['log_score'] for idx in data['index']]
-                dump(data, storage_score)
-
-            score = MetaPhyX_cot_acc(storage_score)
-            score_pth = storage_score.replace('.xlsx', '.csv')
-            dump(score, score_pth)
-            return score
+            return score 
+           
 
 
 class MathVision(ImageBaseDataset):
