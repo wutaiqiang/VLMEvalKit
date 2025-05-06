@@ -443,6 +443,11 @@ class MetaPhyX(ImageBaseDataset):
             lines = [data.iloc[i] for i in range(lt)]     
             pool = mp.Pool(1)        
             res = pool.map(partial(MetaPhyX_process_line), lines)
+
+            suffix = eval_file.split('.')[-1]
+            result_file = eval_file.replace(f'.{suffix}', '_predict.csv')
+            dump(res, result_file)
+
             hit = [np.mean(x['match']) for x in res]
             ret = dict()
             ret['Overall'] = np.mean(hit) * 100
