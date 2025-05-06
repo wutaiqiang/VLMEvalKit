@@ -503,6 +503,7 @@ class MetaPhyX(ImageBaseDataset):
 
                 data['res'] = [ans[idx]['res'] for idx in data['index']]
                 data['log'] = [ans[idx]['log'] for idx in data['index']]
+                data['extracted'] = [ans[idx]['extracted'] for idx in data['index']]
                 dump(data, storage)
 
             score = MetaPhyX_acc(storage)

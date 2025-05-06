@@ -101,7 +101,7 @@ def MetaPhyX_auxeval(model, line):
     
     # judge via LLM
     if gt_answer.strip().lower() == prediction.strip().lower():
-        return dict(log="Matched at string level", res=1)
+        return dict(log="Matched at string level", res=1, extracted=prediction)
     
     for i in range(retry):
         res = model.generate(prompt, temperature=i * 0.5)
@@ -112,12 +112,12 @@ def MetaPhyX_auxeval(model, line):
             # print(res)
             if "1" in res or 1 == res:
                 log += "Semantic equal via LLM."
-                return dict(log=log, res=1)
+                return dict(log=log, res=1, extracted=prediction)
             elif "0" in res or 0 == res:
                 log += "LLM judgement {}".format(res)
-                return dict(log=log, res=0)
+                return dict(log=log, res=0, extracted=prediction)
     log += 'All 5 retries failed.\n'
-    return dict(log=log, res=0)
+    return dict(log=log, res=0, extracted=prediction)
 
 
 def MetaPhyX_acc(result_file):
@@ -164,10 +164,12 @@ def MetaPhyX_process_line(line):
             extracted_answer=match.group(1)
             # print(extracted_answer, x)
             # compare string
+            ret["extracted"] = extracted_answer
             if x.strip().lower() == extracted_answer.strip().lower():
                 ret['match'].append(1)
                 continue
         # 正则匹配不成功，尝试字符比对
+        ret["extracted"] = ret['pred']
         if x+": " in ret['pred']:
             ret['match'].append(1)
         else:
