@@ -227,10 +227,18 @@ def MetaPhyX_process_line_MC(line):
             ret['match'] = 1
             return ret
     else:
+        # try another match strategy 
+        matches = re.findall(r'([BCD]):', ret['pred'])
+        if matches:
+            extracted_answer=matches[-1]
+            ret["extracted"] = extracted_answer
+            if ret['gt'].strip().lower() == extracted_answer.strip().lower():
+                ret['match'] = 1
+                return ret
+        else:
+            ret["extracted"] = "SAME as predict"
 
-        ret["extracted"] = "SAME as predict"
-
-    # 二次判定
+    # 规则判定
     if ret['gt'] + ":" in ret['pred']:
         ret['match'] = 1
     else:
