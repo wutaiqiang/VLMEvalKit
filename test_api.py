@@ -21,9 +21,9 @@
 
 import re
 
-text = "这是一个测试字符串，里面可能有 B: 或者 C: 和 **D: d: 出现。"
-matches = re.findall(r'([BCD]):', text)
+text = "这是一个测试字符串，里面可能有 B: 或者 C: 和 **A: A : d: 出现。"
+matches = re.findall(r'([ABCD]):', text)
 
 if matches:
-    print(matches[-1])  # 输出: ['B', 'C', 'D']
+    print(matches[-1])  # 输出: D
 

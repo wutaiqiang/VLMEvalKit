@@ -228,7 +228,7 @@ def MetaPhyX_process_line_MC(line):
             return ret
     else:
         # try another match strategy 
-        matches = re.findall(r'([BCD]):', ret['pred'])
+        matches = re.findall(r'([ABCD]):', ret['pred'])
         if matches:
             extracted_answer=matches[-1]
             ret["extracted"] = extracted_answer
