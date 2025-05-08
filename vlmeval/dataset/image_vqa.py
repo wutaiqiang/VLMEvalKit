@@ -422,10 +422,13 @@ class MetaPhyX(ImageBaseDataset):
         question = line['question']
 
         msgs = []
-        if isinstance(tgt_path, list):
-            msgs.extend([dict(type='image', value=p) for p in tgt_path])
+        if "TL" in self.dataset_name:
+            pass # pure text, do not load image
         else:
-            msgs = [dict(type='image', value=tgt_path)]
+            if isinstance(tgt_path, list):
+                msgs.extend([dict(type='image', value=p) for p in tgt_path])
+            else:
+                msgs = [dict(type='image', value=tgt_path)]
         msgs.append(dict(type='text', value=question))
         return msgs
 
