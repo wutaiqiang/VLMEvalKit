@@ -36,9 +36,9 @@ Judegement: 1
 Ground truth answer: 12 m/s \n
 Predicted answer: The speed of the box after 2.00 seconds is:
 \[
-\boxed{12.0 \, \text{m/s}}
+\boxed{11.3 \, \text{m/s}}
 \] \n
-Judegement: 1
+Judegement: 0
 """
 
     example_4 = """
@@ -58,18 +58,65 @@ Judegement: 1
 
     return [example_1, example_2, example_3, example_4, example_5]
 
+def get_ICE_MC():
+    example_1 = """
+Ground truth answer: A \n
+Predicted answer: A \n
+Judegement: 1
+"""
+
+    example_2 = """
+Ground truth answer: B \n
+Predicted answer: A \n
+Judegement: 0
+"""
+
+    example_3 = """
+Ground truth answer: C \n
+Predicted answer: ### Step 1: Calculate \( l_1 \)
+The lightbulb is \( 2.50 \, \text{m} \) above the floor, and the bottom of the mirror is \( 0.50 \, \text{m} \) above the floor. The vertical distance from the lightbulb to the bottom of the mirror is:
+\[
+\Delta y_1 = 2.50 \, \text{m} - 0.50 \, \text{m} = 2.00 \, \text{m}.
+\] \n
+Judegement: 0
+"""
+
+    example_4 = """
+Ground truth answer: D \n
+Predicted answer: The correct option is D. \n
+Judegement: 1
+"""
+
+    return [example_1, example_2, example_3, example_4]
 
 def build_metaphyx_gpt4_prompt(line):
     task_description = """
 Please read the following example. Given predicted answer and ground truth answer, 
 compare the these two answers, then ONLY output judegement 1/0 for matched/unmatched at the end of the prompt. 
-For non-multiple-choice questions, if the meaning is expressed in the same way, it is also considered consistent, for example, 0.5m and 50cm.
-If the answer mentions "approximately", then allow the Approximation error, such as 0.49 and approximately 0.5, 0.81 and approximately 0.8. \n
+If the meaning is expressed in the same way, it is also considered consistent, for example, 0.5m and 50cm.
+If the given predicted mentions "approximately", then allow the Approximation Error, such as 0.49 and approximately 0.5, 0.81 and approximately 0.8. \n
 """
     gt_answer = line['answer']
     prediction = str(line['prediction'])
     prompt = task_description
     examples = get_ICE()
+    for example in examples:
+        prompt += example + '\n'
+    prompt += 'Ground truth answer: {} \n'.format(gt_answer)
+    prompt += 'Predicted answer: {} \n'.format(prediction)
+    prompt += 'Judegement:'
+    return prompt
+
+def build_metaphyx_gpt4_prompt_MC(line):
+    task_description = """
+Please read the following example. Given predicted answer and ground truth answer for Multi-Choice question.
+The ground truth answer would be A/B/C/D. The predicted answer would be some words containing A/B/C/D.
+Please compare the these two answers, then ONLY output judegement 1/0 for matched/unmatched at the end of the prompt. \n
+"""
+    gt_answer = line['answer']
+    prediction = str(line['prediction'])
+    prompt = task_description
+    examples = get_ICE_MC()
     for example in examples:
         prompt += example + '\n'
     prompt += 'Ground truth answer: {} \n'.format(gt_answer)
@@ -116,7 +163,7 @@ def MetaPhyX_auxeval(model, line):
     return dict(log=log, res=0, extracted=prediction)
 
 def MetaPhyX_auxeval_MC(model, line):
-    prompt = build_metaphyx_gpt4_prompt(line)
+    prompt = build_metaphyx_gpt4_prompt_MC(line)
     log = ''
     retry = 5
 
