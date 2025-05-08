@@ -182,6 +182,10 @@ def MetaPhyX_auxeval_MC(model, line):
     # judge via LLM
     if gt_answer.strip().lower() == prediction.strip().lower():
         return dict(log="Matched at string level", res=1, extracted=prediction)
+    else:
+        # prediction is A/B/C/D, then must unmatch
+        if prediction.strip() in ["A", "B", "C", "D"]:
+            return dict(log="Unmatched at string level", res=0, extracted=prediction)
     
     for i in range(retry):
         res = model.generate(prompt, temperature=i * 0.5)
