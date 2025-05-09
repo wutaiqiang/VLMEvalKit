@@ -290,7 +290,7 @@ def MetaPhyX_process_line_MC(line):
             ret["extracted"] = "SAME as predict"
 
     # 规则判定
-    if ret['gt'] + ":" in ret['pred']:
+    if ret['gt'] + ":" in ret['pred'] or ret['gt'] + "**" in ret['pred'] or "**" + ret['gt'] in ret['pred']:
         ret['match'] = 1
     else:
         ret['match'] = 0
