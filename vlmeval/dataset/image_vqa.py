@@ -397,21 +397,22 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX.tsv', # noqa
         'MetaPhyX_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_MC.tsv', # noqa
         'MetaPhyX_mini': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini.tsv', # noqa
-        'MetaPhyX_mini_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC.tsv', # noqa
-        'test_mini_MC': '',
-        'test_mini_MC_TL': '',
-        'test_mini': '',
-        'test_mini_TL': '',
+        'MetaPhyX_mini_MC': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC.tsv',
+        'MetaPhyX_mini_IMG': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_IMG.tsv',
+        'MetaPhyX_mini_MC_IMG': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC_IMG.tsv',
+        'MetaPhyX_mini_SIMPLY': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_SIMPLY.tsv',
+        'MetaPhyX_mini_MC_SIMPLY': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_MC_SIMPLY.tsv',
+        # noqa
     }
     DATASET_MD5 = {
         'MetaPhyX': '69dc979f77c3abbf40f6ea0d6c7aad0a', # noqa
         'MetaPhyX_MC': '8552097b249b013bff544df94f276722', # noqa
-        'MetaPhyX_mini': '62ee7e453fd482a4c0dd6e5151437d17', # noqa
-        'MetaPhyX_mini_MC': 'f6984086ba37ce400d71aebb4faf08b6', # noqa
-        'test_mini_MC': 'df83a96d296e2aea74f81c3d30d7a3b0',
-        'test_mini_MC_TL': 'df83a96d296e2aea74f81c3d30d7a3b0',
-        'test_mini': '5c9bac7407c4bd994060e79b58153407',
-        'test_mini_TL': '5c9bac7407c4bd994060e79b58153407',
+        'MetaPhyX_mini': 'e9c2ae036e501fe6e978f3654cb04602', # noqa
+        'MetaPhyX_mini_MC': 'b8aa739ce985b5b73b2d06d94264e1aa', # noqa
+        'MetaPhyX_mini_IMG': 'cf684735d17b3ee796d74624207842e9',
+        'MetaPhyX_mini_MC_IMG': '751327f89268071884571255a186ef21',
+        'MetaPhyX_mini_SIMPLY': '95482ff15eb2470ea1fd46acaa7fce33',
+        'MetaPhyX_mini_MC_SIMPLY': '6d94af111c06a799fe0d9a0c9ad223dd',
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
