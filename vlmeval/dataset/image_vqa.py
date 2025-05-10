@@ -422,12 +422,12 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_mini_MC_SIMPLY': '6d94af111c06a799fe0d9a0c9ad223dd',
         'MetaPhyX_test':'c8d1f5c4b35bdad1030d40ff0fea8deb',
         'MetaPhyX_test_MC':'fae2898675151622b0d23d7cd905dbea',
-        'MetaPhyX_mini_TL':'ca555f3b815944775f646337e91a5501',
-        'MetaPhyX_mini_TL_MC':'701b0b7f2571eca86b48057641e4d83e',
-        'MetaPhyX_mini_TL_SIMPLY':'8c4bafffdd3be23aff2647a5587b44be',
-        'MetaPhyX_mini_TL_MC_SIMPLY':'494f3fc715e60bbf6f1f59883d1f9380',
-        'MetaPhyX_mini_TL_IMG':'9d5964cb0ef08c2e4d20b1eb92985dd4',
-        'MetaPhyX_mini_TL_MC_IMG':'c57f816eebf0c75deac8b2158c048d18',
+        'MetaPhyX_mini_TL': '1c650eb46a86078643cea61b540b4b6f',
+        'MetaPhyX_mini_TL_MC':'4d92f4e9cc096462244dd4059644d540',
+        'MetaPhyX_mini_TL_SIMPLY':'74076fbc29a5ad3f5c26cf7b2c127061',
+        'MetaPhyX_mini_TL_MC_SIMPLY':'c41bda5be9a74d04c45576a83b7898b2',
+        'MetaPhyX_mini_TL_IMG':'d369c0aec7e934e5c3854c0f31489a95',
+        'MetaPhyX_mini_TL_MC_IMG':'ea3eea9a25959179ae8d636f0d454c1e',
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
