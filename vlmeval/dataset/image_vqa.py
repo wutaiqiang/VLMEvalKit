@@ -405,7 +405,11 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_test':'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_test.tsv',
         'MetaPhyX_test_MC':'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_test_MC.tsv',
         'MetaPhyX_mini_TL':'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL.tsv',
-        'MetaPhyX_mini_TL_MC':'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_MC.tsv'
+        'MetaPhyX_mini_TL_MC':'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_MC.tsv',
+        'MetaPhyX_mini_TL_SIMPLY': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_SIMPLY.tsv',
+        'MetaPhyX_mini_TL_MC_SIMPLY': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_MC_SIMPLY.tsv',
+        'MetaPhyX_mini_TL_IMG': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_IMG.tsv',
+        'MetaPhyX_mini_TL_MC_IMG': 'http://opencompass.openxlab.space/utils/benchmarks/MetaPhyX/MetaPhyX_mini_TL_MC_IMG.tsv',
     }
     DATASET_MD5 = {
         'MetaPhyX': '69dc979f77c3abbf40f6ea0d6c7aad0a', # noqa
@@ -419,7 +423,11 @@ class MetaPhyX(ImageBaseDataset):
         'MetaPhyX_test':'c8d1f5c4b35bdad1030d40ff0fea8deb',
         'MetaPhyX_test_MC':'fae2898675151622b0d23d7cd905dbea',
         'MetaPhyX_mini_TL':'ca555f3b815944775f646337e91a5501',
-        'MetaPhyX_mini_TL_MC':'701b0b7f2571eca86b48057641e4d83e'
+        'MetaPhyX_mini_TL_MC':'701b0b7f2571eca86b48057641e4d83e',
+        'MetaPhyX_mini_TL_SIMPLY':'8c4bafffdd3be23aff2647a5587b44be',
+        'MetaPhyX_mini_TL_MC_SIMPLY':'494f3fc715e60bbf6f1f59883d1f9380',
+        'MetaPhyX_mini_TL_IMG':'9d5964cb0ef08c2e4d20b1eb92985dd4',
+        'MetaPhyX_mini_TL_MC_IMG':'c57f816eebf0c75deac8b2158c048d18',
     }
     # Given one data record, return the built prompt (a multi-modal message), can override
     def build_prompt(self, line):
